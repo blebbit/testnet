@@ -47,5 +47,5 @@ make clean
 
 ### Create accounts
 
-You can use the normal pdsadmin scrips,
+You can use the normal pdsadmin scripts,
 copied into the local pds directory for convenience.
