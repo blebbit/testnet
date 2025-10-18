@@ -1,0 +1,6 @@
+/*.env
+
+/plc/did-method-plc/
+/relay/indigo/
+/jetstream/jetstream/
+/pds/atproto/

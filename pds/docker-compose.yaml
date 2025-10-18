@@ -1,0 +1,67 @@
+version: "3"
+
+volumes:
+  spice_pgdata:
+  pds_data:
+  pds_blobs:
+
+services:
+  spicedb:
+    image: "authzed/spicedb"
+    command: "serve --http-enabled"
+    restart: "always"
+    ports:
+      - "6080:8080"
+      - "6090:9090"
+      - "60051:50051"
+    environment:
+      - "SPICEDB_GRPC_PRESHARED_KEY=${SPICEDB_GRPC_PRESHARED_KEY}"
+      - "SPICEDB_DATASTORE_ENGINE=${SPICEDB_DATASTORE_ENGINE}"
+      - "SPICEDB_DATASTORE_CONN_URI=${SPICEDB_DATASTORE_CONN_URI}"
+    depends_on:
+      - "spicedb-pg"
+      - "spicedb-pg-mig"
+
+  spicedb-pg-mig:
+    image: "authzed/spicedb"
+    command: "migrate head"
+    restart: "on-failure"
+    environment:
+      - "SPICEDB_DATASTORE_ENGINE=${SPICEDB_DATASTORE_ENGINE}"
+      - "SPICEDB_DATASTORE_CONN_URI=${SPICEDB_DATASTORE_CONN_URI}"
+    depends_on:
+      - "spicedb-pg"
+      - "spicedb-pg-init"
+
+  # track_commit_timestamp is required to support SpiceDB's Watch API
+  # see https://authzed.com/docs/spicedb/concepts/datastores#usage-notes-2
+  spicedb-pg-init:
+    image: "postgres:16"
+    restart: "on-failure:3"
+    command: "psql postgres://spicedb:pg-secret@spicedb-pg:5432/spicedb?sslmode=disable -c \"ALTER SYSTEM SET track_commit_timestamp = on;\""
+    depends_on:
+      - "spicedb-pg"
+
+  spicedb-pg:
+    image: "postgres:16"
+    ports:
+      - "6432:5432"
+    environment:
+      - "POSTGRES_DB=${SPICEDB_POSTGRES_DB}"
+      - "POSTGRES_USER=${SPICEDB_POSTGRES_USER}"
+      - "POSTGRES_PASSWORD=${SPICEDB_POSTGRES_PASSWORD}"
+    volumes:
+      - spice_pgdata:/var/lib/postgresql/data
+
+  pds:
+    image: "blebbit/pds:latest"
+    restart: "always"
+    depends_on:
+      - "spicedb"
+    env_file:
+      - ./.env
+    volumes:
+      - pds_data:/app/data
+      - pds_blobs:/app/blobs
+    ports:
+    - "6000:3000"

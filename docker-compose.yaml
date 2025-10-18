@@ -1,0 +1,149 @@
+version: "3"
+services:
+  relay_pg:
+    image: postgres:16
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_DB=relay
+      - POSTGRES_USER=relay
+      - POSTGRES_PASSWORD=relay
+    volumes:
+      - relay_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U relay
+      interval: 500ms
+      timeout: 10s
+      retries: 20
+  plc:
+    depends_on:
+      plc_pg:
+        condition: service_healthy
+        restart: true
+    image: blebbit/plc:latest
+    ports:
+      - "7000:3000"
+    restart: always
+    env_file:
+      - ./plc.env
+  spicedb_pg:
+    image: postgres:16
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_DB=spicedb
+      - POSTGRES_USER=spicedb
+      - POSTGRES_PASSWORD=spicedb
+    volumes:
+      - spicedb_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U spicedb
+      interval: 500ms
+      timeout: 10s
+      retries: 20
+  relay:
+    depends_on:
+      relay_pg:
+        condition: service_healthy
+        restart: true
+      plc:
+        condition: service_started
+    image: blebbit/relay:latest
+    ports:
+      - "7001:3000"
+    restart: always
+    env_file:
+      - ./relay.env
+    volumes:
+      - relay_data:/data
+  plc_pg:
+    image: postgres:16
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_DB=plc
+      - POSTGRES_USER=plc
+      - POSTGRES_PASSWORD=plc
+    volumes:
+      - plc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U plc
+      interval: 500ms
+      timeout: 10s
+      retries: 20
+  spicedb:
+    depends_on:
+      spicedb_pg:
+        condition: service_healthy
+        restart: true
+      spicedb_pg_mig:
+        condition: service_completed_successfully
+    image: authzed/spicedb
+    command: serve --http-enabled
+    restart: always
+    ports:
+      - "8080"
+      - "9090"
+      - "50051"
+    environment:
+      - SPICEDB_GRPC_PRESHARED_KEY=testnet-spicedb
+      - SPICEDB_DATASTORE_ENGINE=postgres
+      - SPICEDB_DATASTORE_CONN_URI=postgres://spicedb:spicedb@spicedb_pg:5432/spicedb?sslmode=disable
+  jetstream:
+    image: blebbit/jetstream:latest
+    ports:
+      - "7002:7002"
+    restart: always
+    env_file:
+      - ./jetstream.env
+    volumes:
+      - jetstream_data:/data
+    depends_on:
+      plc:
+        condition: service_started
+      relay:
+        condition: service_started
+  spicedb_pg_init:
+    image: postgres:16
+    restart: on-failure:3
+    command: psql postgres://spicedb:spicedb@spicedb_pg:5432/spicedb?sslmode=disable -c "ALTER SYSTEM SET track_commit_timestamp = on;"
+    depends_on:
+      spicedb_pg:
+        condition: service_healthy
+        restart: true
+  spicedb_pg_mig:
+    image: authzed/spicedb:latest
+    command: migrate head
+    restart: on-failure
+    environment:
+      - SPICEDB_DATASTORE_ENGINE=postgres
+      - SPICEDB_DATASTORE_CONN_URI=postgres://spicedb:spicedb@spicedb_pg:5432/spicedb?sslmode=disable
+    depends_on:
+      spicedb_pg:
+        condition: service_healthy
+        restart: true
+      spicedb_pg_init:
+        condition: service_completed_successfully
+  pds:
+    image: blebbit/pds:latest
+    ports:
+      - "6000:3000"
+    restart: always
+    env_file:
+      - ./pds.env
+    volumes:
+      - pds_data:/app/data
+      - pds_blobs:/app/blobs
+    depends_on:
+      plc:
+        condition: service_started
+      spicedb:
+        condition: service_started
+volumes:
+  relay_pgdata: {}
+  spicedb_pgdata: {}
+  plc_pgdata: {}
+  relay_data: {}
+  jetstream_data: {}
+  pds_data: {}
+  pds_blobs: {}
