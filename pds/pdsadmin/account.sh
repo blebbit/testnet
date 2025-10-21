@@ -3,7 +3,9 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-PDS_ENV_FILE=${PDS_ENV_FILE:-"../../pds.env"}
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+PDS_ENV_FILE=${PDS_ENV_FILE:-"$REPO_ROOT/pds.env"}
 source "${PDS_ENV_FILE}"
 
 # curl a URL and fail if the request fails.
@@ -40,6 +42,7 @@ if [[ "${SUBCOMMAND}" == "list" ]]; then
     OUTPUT="${OUTPUT},${ITEM}"
   done
   OUTPUT="${OUTPUT}]"
+  echo "${OUTPUT}"
   echo "${OUTPUT}" | jq --raw-output '.[] | [.handle, .email, .did] | @tsv' | column -t
 
 #
