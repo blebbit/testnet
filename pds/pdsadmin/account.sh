@@ -3,7 +3,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-PDS_ENV_FILE=${PDS_ENV_FILE:-"../../../authr/services/pds/pds.env"}
+PDS_ENV_FILE=${PDS_ENV_FILE:-"../../pds.env"}
 source "${PDS_ENV_FILE}"
 
 # curl a URL and fail if the request fails.

@@ -12,6 +12,9 @@ One the foundation settles, we will open our testnet to others.
 
 ### Setup
 
+Note, the Relay has a bug in flag handling, such that it will not start without
+the changes in this PR: https://github.com/bluesky-social/indigo/pull/1174
+
 ```
 # build the images
 make images
