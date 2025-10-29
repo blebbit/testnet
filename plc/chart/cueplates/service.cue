@@ -1,18 +1,7 @@
 package cueplates
 
-apiVersion: "v1"
-kind: "Service"
-metadata: {
-  name: "plc"
-  labels: {
-    service: name
-  }
-}
-spec: {
-  ports: [{
-    name: "http"
-    port: 3000
-  }]
-  selector: metadata.labels
-  type: "ClusterIP"
-}
+import (
+  "github.com/blebbit/testnet/pkg/k8s"
+)
+
+helm: service: k8s.Service & { #name: vars.name }

@@ -2,6 +2,22 @@ COMPONENTS = plc pds relay jetstream
 TESTNET_NS = testnet
 REGISTRY = tbd...
 
+CUE_TAGS = 
+expose:
+	@echo "no exposure"
+ifeq ($(TESTNET_EXPOSE),cloudflare)
+CUE_TAGS=-t cloudflare -t TESTNET_DOMAIN=$(TESTNET_DOMAIN) -t CLOUDFLARE_TUNNEL_ID=$(CLOUDFLARE_TUNNEL_ID)
+expose:
+	@echo "cloudflare" $(CUE_TAGS)
+endif
+ifeq ($(TESTNET_EXPOSE),tailscale)
+expose:
+	@echo "tailscale"
+endif
+
+tags:
+	@echo "'$(CUE_TAGS)'"
+
 .PHONY: help help/%
 help:
 	cat Makefile
@@ -50,16 +66,17 @@ clean: down
 k8s.operators: k8s.operators.prep k8s.operators.repos k8s.operators.cnpg
 .PHONY: k8s.operators
 
-k8s.operators.repos:
+k8s.operators.repos: k8s.operators.prep
 	helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 	helm repo add tailscale https://pkgs.tailscale.com/helmcharts
 	helm repo add cloudflare https://cloudflare.github.io/helm-charts
+	helm repo add external-dns https://kubernetes-sigs.github.io/external-dns
 	helm repo add cnpg https://cloudnative-pg.github.io/charts
 	helm repo update
-.PHONY: k8s.operators
+.PHONY: k8s.operators.repos
 
 k8s.operators.prep:
-	kubectl create namespace operators
+	-kubectl create namespace operators
 .PHONY: k8s.operators.prep
 
 k8s.operators.tailscale:
@@ -80,13 +97,42 @@ k8s.operators.ingress-nginx:
 		--wait
 .PHONY: k8s.operators.ingress-nginx
 
-k8s.operators.cloudflare: k8s.operators.ingress-nginx
+k8s.operators.external-dns:
+	helm upgrade --install \
+		external-dns external-dns/external-dns \
+		--namespace=operators \
+		--set sources[0]=ingress \
+		--set policy=sync \
+		--set provider.name=cloudflare \
+		--set env[0].name=CF_API_TOKEN \
+		--set env[0].valueFrom.secretKeyRef.name=cloudflare-api-key \
+		--set env[0].valueFrom.secretKeyRef.key=apiKey \
+		--wait
+.PHONY: k8s.operators.external-dns
+
+k8s.operators.cloudflare:
+# 	make k8s.operators.ingress-nginx
+# 	make k8s.operators.external-dns
+
+# 	kubectl create secret generic cloudflare-api-key \
+# 		--from-literal=apiKey=$(CLOUDFLARE_APIKEY) \
+# 		--from-literal=email=$(CLOUDFLARE_EMAIL) \
+# 		--namespace=operators
+# 	kubectl create secret generic cloudflare-tunnel-creds \
+# 		--from-file=credentials.json=$(CLOUDFLARE_JSON_CREDS) \
+# 		--namespace=operators
+
+	cue export dmz/tunnel-values.cue \
+	  -t TESTNET_DOMAIN=$(TESTNET_DOMAIN) \
+	  -t CLOUDFLARE_TUNNEL_NAME=$(CLOUDFLARE_TUNNEL_NAME) \
+	  -t CLOUDFLARE_TUNNEL_ID=$(CLOUDFLARE_TUNNEL_ID) \
+		-o tunnel-values.yaml
 	helm upgrade --install \
 		cloudflare cloudflare/cloudflare-tunnel \
-		--namespace=$(TESTNET_NS) \
-		--set-string oauth.clientId="${TAILSCALE_CLIENT}" \
-		--set-string oauth.clientSecret="${TAILSCALE_SECRET}" \
+		--namespace=operators \
+		--values=tunnel-values.yaml
 		--wait
+	rm tunnel-values.yaml
 .PHONY: k8s.operators.cloudflare
 
 # https://github.com/cloudnative-pg/charts
@@ -101,35 +147,28 @@ k8s.namespace:
 	kubectl create namespace $(TESTNET_NS)
 .PHONY: k8s.namespace
 
-SECRETS = $(addsuffix .secret,$(COMPONENTS))
-.PHONY: k8s.secrets $(SECRETS)
-k8s.secrets: $(SECRETS)
-$(SECRETS): 
-	kubectl create secret generic $(patsubst %.secret,%,$@)-env \
-	  --namespace $(TESTNET_NS) \
-	  --from-env-file=$(patsubst %.secret,%,$@).env
-
 SERVICES = $(addsuffix .service,$(COMPONENTS))
-.PHONY: k8s.services $(SERVICES)
-k8s.services: $(SERVICES)
 $(SERVICES): 
-	@if [ -d ./$(patsubst %.service,%,$@)/chart/cueplates ]; then \
-	cd  ./$(patsubst %.service,%,$@)/chart/cueplates && \
-	for f in `ls *.cue`; do cue export $$f -fo ../templates/$${f%.cue}.yaml; done \
+	if [ -d ./$(patsubst %.service,%,$@)/chart/cueplates ]; then \
+	cd  ./$(patsubst %.service,%,$@)/chart && \
+	echo "apiVersion: v1" > ./templates/cueplates.yaml && \
+	echo "kind: List" >> ./templates/cueplates.yaml && \
+	echo "items:" >> ./templates/cueplates.yaml && \
+	cue export $(CUE_TAGS) ./cueplates --out yaml -e '[for _,v in helm {v}]' >> ./templates/cueplates.yaml; \
 	fi
 	cd $(patsubst %.service,%,$@)/chart && \
 	helm upgrade --install \
 	  $(patsubst %.service,%,$@) ./ \
 	  --namespace $(TESTNET_NS) \
 	  --wait
+.PHONY: $(SERVICES)
 
 DELETES = $(addsuffix .delete,$(COMPONENTS))
-.PHONY: k8s.delete $(DELETES)
-k8s.services: $(DELETES)
 $(DELETES): 
 	cd $(patsubst %.delete,%,$@)/chart && \
 	helm uninstall $(patsubst %.delete,%,$@) \
-	  --namespace $(TESTNET_NS) \
+	  --namespace $(TESTNET_NS)
+.PHONY: $(DELETES)
 
 
 

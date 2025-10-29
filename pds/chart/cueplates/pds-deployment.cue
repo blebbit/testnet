@@ -1,68 +1,59 @@
 package cueplates
 
 import (
-  "github.com/blebbit/testnet/env"
+  "github.com/blebbit/testnet/pkg/k8s"
 )
 
-apiVersion: "apps/v1"
-kind: "Deployment"
-metadata: {
-  name: "pds"
-  labels: {
-    service: name
-    envhash: env.pds.#hash
-  }
-}
+helm: pds_deployment: k8s.Deployment & {
+  #name: "pds"
 
-let M = metadata
+  spec: {
+    replicas: 1
+    template: {
+      spec: {
 
-spec: {
-  replicas: 1
-  selector: matchLabels: { for k,v in M.labels if k != "envhash" { (k): v }}
-  template: {
-    metadata: labels: M.labels
-
-    spec: {
-      restartPolicy: "Always"
-      // initContainers: [{
-      //   name: "wait-spicedb"
-      //   image: "postgres"
-      //   env: [{
-      //     name: "DB_URL"
-      //     valueFrom: secretKeyRef: {
-      //       key: "uri"
-      //       name: "plc-pg-app"
-      //     }
-      //   }]
-      //   command: ["sh", "-ec", """
-      //     until pg_isready -d $DB_URL; do
-      //       sleep 1
-      //     done
-      //   """]
-      // }]
-      containers: [{
-        name: M.name
-        image: "docker.io/blebbit/pds:latest"
-        imagePullPolicy: "Never"
-        envFrom:[{
-          secretRef: name: "pds-env"
+        restartPolicy: "Always"
+        // need to wait on spicedb ready
+        // initContainers: [{
+        //   name: "mig-db"
+        //   image: "authzed/spicedb:latest"
+        //   imagePullPolicy: "IfNotPresent"
+        //   command: ["spicedb", "migrate", "head"]
+        //   env: [{
+        //     name: "SPICEDB_DATASTORE_ENGINE"
+        //     value: "postgres"
+        //   },{
+        //     name: "SPICEDB_DATASTORE_CONN_URI"
+        //     valueFrom: secretKeyRef: {
+        //       key: "uri"
+        //       name: "pds-pg-app"
+        //     }
+        //   }]
+        // }]
+        containers: [{
+          name: #name
+          image: "docker.io/blebbit/pds:latest"
+          imagePullPolicy: "Never"
+          envFrom:[{
+            secretRef: name: "pds-env"
+          }]
+          volumeMounts: [{
+            name: "data"
+            mountPath: "/app/data"
+          },{
+            name: "blobs"
+            mountPath: "/app/blobs"
+          }]
         }]
-        volumeMounts: [{
+
+        volumes: [{
           name: "data"
-          mountPath: "/app/data"
+          persistentVolumeClaim: claimName: "pds-data"
         },{
           name: "blobs"
-          mountPath: "/app/blobs"
+          persistentVolumeClaim: claimName: "pds-blobs"
         }]
-      }]
-
-      volumes: [{
-        name: "data"
-        persistentVolumeClaim: claimName: "pds-data"
-      },{
-        name: "blobs"
-        persistentVolumeClaim: claimName: "pds-blobs"
-      }]
+      }
     }
   }
 }

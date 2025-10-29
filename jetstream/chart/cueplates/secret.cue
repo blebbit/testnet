@@ -1,16 +1,7 @@
 package cueplates
 
 import (
-  "encoding/base64"
-
-  "github.com/blebbit/testnet/env"
+  "github.com/blebbit/testnet/pkg/k8s"
 )
 
-apiVersion: "v1"
-kind: "Secret"
-metadata: name: "jetstream-env"
-data: {
-  for k,v in env.jetstream {
-    (k): base64.Encode(null, v)
-  }
-}
+helm: secret: k8s.SecretEnvFile & { #name: vars.name }

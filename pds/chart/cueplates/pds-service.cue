@@ -1,16 +1,7 @@
-apiVersion: "v1"
-kind: "Service"
-metadata: {
-  name: "pds"
-  labels: {
-    service: name
-  }
-}
-spec: {
-  ports: [{
-    name: "http"
-    port: 3000
-  }]
-  selector: metadata.labels
-  type: "ClusterIP"
-}
+package cueplates
+
+import (
+  "github.com/blebbit/testnet/pkg/k8s"
+)
+
+helm: pds_service: k8s.Service & { #name: vars.name }

@@ -76,29 +76,77 @@ make clean
 > you'll need to push the images to your preferred registry or copy them over manually.
 
 
+> [!DANGER]
+> You can expose the services to the public internet if you wish.
+> This should be done before you run the following commands.
+> Cloudflare Tunnels was selected initially, other methods should work as well (i.e. tailscale network or dns + reverse proxy + certbot).
+
 ```sh
+# Set the expose method, empty means not exposed, see options below
+export TESTNET_EXPOSE=
+
+# pick a top-level domain you control
+export TESTNET_DOMAIN=example.com
+
 # prepare kubernetes
 make k8s.operators
-# chose tailscale or cloudflare
-make k8s.operators.tailscale
-make k8w.operators.cloudflare
 
 # prepare namespace
 make k8s.namespace
 
-# push ENV files as secrets
-make k8s.secrets
-
 # install testnet services
-make k8s.services
+make plc.service
+make relay.service
+make jetstream.service
+make pds.service
 ```
 
-- Tailscale: https://tailscale.com/kb/1236/kubernetes-operator | https://tailscale.com/kb/1439/kubernetes-operator-cluster-ingress
-- Cloudflare: https://itnext.io/exposing-kubernetes-apps-to-the-internet-with-cloudflare-tunnel-ingress-controller-and-e30307c0fcb0
+#### Cloudflare setup
 
+Follow this tutorial: https://itnext.io/exposing-kubernetes-apps-to-the-internet-with-cloudflare-tunnel-ingress-controller-and-e30307c0fcb0
+
+You only need to follow these sections and set the ENV vars below.
+The scripts will handle the operator installs and secret creation.
+
+Sections
+
+0. Pick a top-levl domain name you own
+1. Cloudflare Token (apikey & email)
+2. Create the tunnel (tunnel-name/id & json_creds)
+3. Change Cloudflare TLS mode
+
+```sh
+export TESTNET_EXPOSE=cloudflare
+export CLOUDFLARE_APIKEY=...
+export CLOUDFLARE_EMAIL=...
+export CLOUDFLARE_TUNNEL_NAME=testnet
+export CLOUDFLARE_TUNNEL_ID=...
+export CLOUDFLARE_JSON_CREDS=/home/bob/.cloudflared/<tunnel-id>.json
+```
+
+
+#### Tailscale setup
+
+tbd
+
+```sh
+export TESTNET_EXPOSE=tailscale
+export TAILSCALE_CLIENT=...
+export TAILSCALE_SECRET=...
+```
 
 ### Create accounts
 
 You can use the normal pdsadmin scripts,
 copied into the local pds directory for convenience.
 The `goat` tool now has these features too!
+
+
+## References, Notes, and Links
+
+- https://tangled.org/@smokesignal.events/localdev
+- https://github.com/bluesky-social/atproto/tree/main/packages/dev-env
+- [old Bluesky doc for their, now retired, "testnet" (sandbox)](https://docs.bsky.app/blog/federation-sandbox), inspiration for similar doc for this project
+- Cloudflare Setup: https://itnext.io/exposing-kubernetes-apps-to-the-internet-with-cloudflare-tunnel-ingress-controller-and-e30307c0fcb0
+- Tailscale Setup: https://tailscale.com/kb/1236/kubernetes-operator | https://tailscale.com/kb/1439/kubernetes-operator-cluster-ingress
+

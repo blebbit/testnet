@@ -1,16 +1,12 @@
 package cueplates
 
-apiVersion: "postgresql.cnpg.io/v1"
-kind: "Cluster"
-metadata: {
-  name: "plc-pg"
-}
-spec: {
-  instances: 1
-  storage: size: "5Gi"
+import (
+  "github.com/blebbit/testnet/pkg/k8s"
+)
 
-  bootstrap: initdb: {
-    database: "plc"
-    owner: "plc"
+helm: postgresql: k8s.Postgresql & {
+  #name: vars.name
+  spec: {
+    storage: size: "5Gi"
   }
 }

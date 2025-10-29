@@ -1,10 +1,10 @@
-apiVersion: "v1"
-kind: "PersistentVolumeClaim"
-metadata: name: "jetstream-data"
-spec: {
-  accessModes: ["ReadWriteOnce"]
-  storageClassName: "local-path"
-  resources: {
-    requests: storage: "2Gi"
-  }
+package cueplates
+
+import (
+  "github.com/blebbit/testnet/pkg/k8s"
+)
+
+helm: pvc: k8s.LocalPathPVC & { 
+  #name: "\(vars.name)-data"
+  #size: "2Gi"
 }

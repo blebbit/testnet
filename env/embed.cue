@@ -22,3 +22,6 @@ for path, contents in _files {
     }
   }
 }
+
+pds: _
+spicedb: pds

@@ -1,47 +1,33 @@
 package cueplates
 
 import (
-  "github.com/blebbit/testnet/env"
+  "github.com/blebbit/testnet/pkg/k8s"
 )
 
-apiVersion: "apps/v1"
-kind: "Deployment"
-metadata: {
-  name: "jetstream"
-  labels: {
-    service: name
-    envhash: env.jetstream.#hash
-  }
-}
+helm: deployment: k8s.Deployment & {
+  #name: "jetstream"
 
-let M = metadata
-
-spec: {
-  replicas: 1
-  selector: matchLabels: { for k,v in M.labels if k != "envhash" { (k): v }}
-  template: {
-    metadata: labels: M.labels
-
-    spec: {
-      restartPolicy: "Always"
-
-      containers: [{
-        name: M.name
-        image: "docker.io/blebbit/jetstream:latest"
-        imagePullPolicy: "Never"
-        envFrom:[{
-          secretRef: name: "jetstream-env"
+  spec: {
+    replicas: 1
+    template: {
+      spec: {
+        containers: [{
+          name: #name
+          image: "docker.io/blebbit/jetstream:latest"
+          imagePullPolicy: "Never"
+          envFrom:[{
+            secretRef: name: "jetstream-env"
+          }]
+          volumeMounts: [{
+            name: "data"
+            mountPath: "/data"
+          }]
         }]
-        volumeMounts: [{
+        volumes: [{
           name: "data"
-          mountPath: "/data"
+          persistentVolumeClaim: claimName: "jetstream-data"
         }]
-      }]
-
-      volumes: [{
-        name: "data"
-        persistentVolumeClaim: claimName: "jetstream-data"
-      }]
+      }
     }
   }
 }
