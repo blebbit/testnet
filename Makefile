@@ -111,16 +111,16 @@ k8s.operators.external-dns:
 .PHONY: k8s.operators.external-dns
 
 k8s.operators.cloudflare:
-# 	make k8s.operators.ingress-nginx
-# 	make k8s.operators.external-dns
+	make k8s.operators.ingress-nginx
+	make k8s.operators.external-dns
 
-# 	kubectl create secret generic cloudflare-api-key \
-# 		--from-literal=apiKey=$(CLOUDFLARE_APIKEY) \
-# 		--from-literal=email=$(CLOUDFLARE_EMAIL) \
-# 		--namespace=operators
-# 	kubectl create secret generic cloudflare-tunnel-creds \
-# 		--from-file=credentials.json=$(CLOUDFLARE_JSON_CREDS) \
-# 		--namespace=operators
+	kubectl create secret generic cloudflare-api-key \
+		--from-literal=apiKey=$(CLOUDFLARE_APIKEY) \
+		--from-literal=email=$(CLOUDFLARE_EMAIL) \
+		--namespace=operators
+	kubectl create secret generic cloudflare-tunnel-creds \
+		--from-file=credentials.json=$(CLOUDFLARE_JSON_CREDS) \
+		--namespace=operators
 
 	cue export dmz/tunnel-values.cue \
 	  -t TESTNET_DOMAIN=$(TESTNET_DOMAIN) \
