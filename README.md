@@ -12,7 +12,12 @@ One the foundation settles, we will open our testnet to others.
 
 ### Setup
 
-```
+Deps:
+
+- [CUE](https://cuelang.org)
+- Docker
+
+```sh
 # build the images
 make images
 
@@ -49,16 +54,6 @@ chmod 600 "$KUBECONFIG"
 ```
 
 
-### Domains
-
-This setup uses a Cloudflare tunnel with the following settings
-
-- `plc.<domain>` -> `:7000`
-- `relay.<domain>` -> `:7001`
-- `jetstream.<domain>` -> `:7002`
-- `pds.<domain>` -> `:6000`
-
-
 ### Lifecycle the network
 
 #### With Docker Compose
@@ -79,7 +74,7 @@ make clean
 > [!DANGER]
 > You can expose the services to the public internet if you wish.
 > This should be done before you run the following commands.
-> Cloudflare Tunnels was selected initially, other methods should work as well (i.e. tailscale network or dns + reverse proxy + certbot).
+> See the sections below on exposing depending on your runtime and networking choices.
 
 ```sh
 # Set the expose method, empty means not exposed, see options below
@@ -101,12 +96,37 @@ make jetstream.service
 make pds.service
 ```
 
-#### Cloudflare setup
+### Exposing the services
+
+#### Domains
+
+For cloudflare tunnels, you need to use a top-level domain
+because they limit free certs to a single subdomain.
+
+We haven't tried tailscale yet, but it should match the telnet you want to use.
+There are links to references we intended to use if/when we get to this.
+
+- `plc.<domain>`
+- `relay.<domain>`
+- `jetstream.<domain>`
+- `pds.<domain>`
+
+#### Cloudflare Docker Compose setup
+
+Setup a cloudflared tunnel on the host and set the following rules.
+You can use the UI or CLI as well as adjust the ports by editing the CUE files.
+
+- `plc.<domain>` -> `:7000`
+- `relay.<domain>` -> `:7001`
+- `jetstream.<domain>` -> `:7002`
+- `pds.<domain>` -> `:6000`
+
+#### Cloudflare Kubernetes setup
 
 Follow this tutorial: https://itnext.io/exposing-kubernetes-apps-to-the-internet-with-cloudflare-tunnel-ingress-controller-and-e30307c0fcb0
 
 You only need to follow these sections and set the ENV vars below.
-The scripts will handle the operator installs and secret creation.
+The scripts will handle the operator installs, secret creation, and helm invocations.
 
 Sections
 
