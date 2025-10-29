@@ -50,7 +50,7 @@ services: plc: {
   image: "blebbit/plc:latest"
   ports: ["7000:3000"]
   restart: "always"
-  env_file: ["./plc.env"]
+  env_file: ["./env/plc.env"]
 }
 
 //
@@ -61,7 +61,7 @@ services: relay: {
   image: "blebbit/relay:latest"
   ports: ["7001:3000"]
   restart: "always"
-  env_file: ["./relay.env"]
+  env_file: ["./env/relay.env"]
   volumes: [
     "relay_data:/data",
   ]
@@ -81,7 +81,7 @@ services: jetstream: {
   image: "blebbit/jetstream:latest"
   ports: ["7002:7002"]
   restart: "always"
-  env_file: ["./jetstream.env"]
+  env_file: ["./env/jetstream.env"]
   volumes: [
     "jetstream_data:/data",
   ]
@@ -157,7 +157,7 @@ services: pds: {
   image: "blebbit/pds:latest"
   ports: ["6000:3000"]
   restart: "always"
-  env_file: ["./pds.env"]
+  env_file: ["./env/pds.env"]
   volumes: [
     "pds_data:/app/data",
     "pds_blobs:/app/blobs",

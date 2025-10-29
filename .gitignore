@@ -1,4 +1,4 @@
-/*.env
+/env/*.env
 
 /plc/did-method-plc/
 /relay/indigo/

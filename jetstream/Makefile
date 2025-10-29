@@ -3,7 +3,7 @@ help:
 deps:
 	if [[ -d jetstream ]]; then cd jetstream && git fetch --prune && git pull; else git clone https://github.com/bluesky-social/jetstream; fi
 image:
-	cd jetstream && docker build -t blebbit/jetstream:latest .
+	cd jetstream && docker build -t blebbit/jetstream:latest --platform linux/amd64 .
 up:
 	docker compose up -d
 
