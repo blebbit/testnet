@@ -20,7 +20,7 @@ CloudflareIngress: {
     }
   }
   spec: {
-    rules: [{
+    rules: [...] | *[{
       host: "\(#in.name).\(#in.domain)"
       http: {
         paths: [{

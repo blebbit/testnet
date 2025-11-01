@@ -3,4 +3,6 @@
 /plc/did-method-plc/
 /relay/indigo/
 /jetstream/jetstream/
-/pds/atproto/
+/pds/atproto/node_modules
+
+/node_modules

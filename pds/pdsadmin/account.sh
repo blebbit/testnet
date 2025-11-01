@@ -5,7 +5,7 @@ set -o pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
-PDS_ENV_FILE=${PDS_ENV_FILE:-"$REPO_ROOT/pds.env"}
+PDS_ENV_FILE=${PDS_ENV_FILE:-"$REPO_ROOT/env/pds.env"}
 source "${PDS_ENV_FILE}"
 
 # curl a URL and fail if the request fails.

@@ -71,7 +71,7 @@ make clean
 > you'll need to push the images to your preferred registry or copy them over manually.
 
 
-> [!DANGER]
+> [!ERROR]
 > You can expose the services to the public internet if you wish.
 > This should be done before you run the following commands.
 > See the sections below on exposing depending on your runtime and networking choices.
@@ -110,16 +110,23 @@ There are links to references we intended to use if/when we get to this.
 - `relay.<domain>`
 - `jetstream.<domain>`
 - `pds.<domain>`
+- `*.pds.<domain>/.well-known/atproto-did`
 
 #### Cloudflare Docker Compose setup
 
 Setup a cloudflared tunnel on the host and set the following rules.
 You can use the UI or CLI as well as adjust the ports by editing the CUE files.
 
+> [!ERROR]
+> You will need Advanced Certificate Manager in order to have TLS on the handle domains
+> so that various ATProto tooling can map handle to did. If you use custom identity resolution,
+> you can avoid this requirement.
+
 - `plc.<domain>` -> `:7000`
 - `relay.<domain>` -> `:7001`
 - `jetstream.<domain>` -> `:7002`
 - `pds.<domain>` -> `:6000`
+- `*.pds.<domain>/.well-known/atproto-did` -> `:6000`
 
 #### Cloudflare Kubernetes setup
 
