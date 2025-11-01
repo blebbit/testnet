@@ -166,7 +166,23 @@ export TAILSCALE_SECRET=...
 
 You can use the normal pdsadmin scripts,
 copied into the local pds directory for convenience.
+
+```sh
+
+```
+
 The `goat` tool now has these features too!
+
+
+### Using Testnet
+
+The main difference is how identity resolution happens (i.e. handle->did->pds).
+You must configure the `@atproto/identity` to use the testnet PLC.
+The `Agent` works as normal because you configure it with the PDS, from identity resolution,
+prior to usage; and that PDS is also configured to use the same PLC.
+
+See [examples directory](./examples) for the code and details.
+
 
 
 ## References, Notes, and Links
