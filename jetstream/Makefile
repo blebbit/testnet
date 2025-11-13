@@ -2,6 +2,8 @@ help:
 	cat Makefile
 deps:
 	if [[ -d jetstream ]]; then cd jetstream && git fetch --prune && git pull; else git clone https://github.com/bluesky-social/jetstream; fi
+diff:
+	cd jetstream && git diff
 image:
 	cd jetstream && docker build -t blebbit/jetstream:latest --platform linux/amd64 .
 up:

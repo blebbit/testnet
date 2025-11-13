@@ -41,6 +41,13 @@ $(IMGS):
 	make -C $(patsubst %.image,%,$@) image
 
 
+DIFFS = $(addsuffix .diff,$(COMPONENTS))
+.PHONY: diffs $(DIFFS)
+diffs: $(DIFFS)
+$(DIFFS):
+	make -C $(patsubst %.diff,%,$@) diff
+
+
 # initial env files
 .PHONY: env
 env:

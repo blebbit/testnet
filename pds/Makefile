@@ -1,7 +1,9 @@
 help:
 	cat Makefile
 deps:
-	if [[ -d atproto ]]; then cd atproto && git fetch --prune && git pull; else git clone https://github.com/blebbit/atproto; fi
+	if [[ -d atproto ]]; then rm -rf atproto; fi && git clone https://github.com/blebbit/atproto;
+diff:
+	cd atproto && git diff
 image:
 	cd atproto && docker build -t blebbit/pds:latest -f ./services/pds/Dockerfile --platform linux/amd64 .
 up:

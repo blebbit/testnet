@@ -4,8 +4,7 @@ This file outlines the patches we apply to upstream services
 
 1. PDS, see https://github.com/blebbit/atproto for details, mainly "permissioned spaces"
 2. PLC, change ENV var loading for databause url to make it CNPG friendly
-
-
+3. Relay, changes to go build in alpine because we do not have git tags (maybe we can now, because upstream patch merged? forget which service that was, and maybe it's that we should pin the clone to a tag)
 
 
 ### PLC
@@ -54,4 +53,20 @@ This file outlines the patches we apply to upstream services
  const parseMaybeInt = (str) => {
    return str ? parseInt(str, 10) : undefined
  }
+```
+
+### Relay
+
+```diff
+--- a/cmd/relay/Dockerfile
++++ b/cmd/relay/Dockerfile
+@@ -11,8 +11,9 @@ WORKDIR /dockerbuild
+ 
+ # timezone data for alpine builds
+ ENV GOEXPERIMENT=loopvar
+-RUN GIT_VERSION=$(git describe --tags --long --always) && \
+-    go build -tags timetzdata -o /relay ./cmd/relay
++# RUN GIT_VERSION=$(git describe --tags --long --always) && \
++#     go build -tags timetzdata -o /relay ./cmd/relay
++RUN go build -tags timetzdata -o /relay ./cmd/relay
 ```
