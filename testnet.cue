@@ -142,7 +142,6 @@ testnet: {
 	// @bluesky/pds or @blebbit/permissioned-pds
 	pds: {
 		config: env.#HostFile & {path: "./env/pds.env"}
-		// secret: env.#HostFile & {path: "./env/pds.secret.env"}
 		secret: env.#Secret & {name: "pds-secret", source: "file://env/pds.secret.env"}
 		data: env.#Cache & {name: "pds-data"}
 		blobs: env.#Cache & {name: "pds-blobs"}
@@ -155,8 +154,8 @@ testnet: {
 				env.BindService & {service: plc.service},
 				env.BindService & {service: relay.service},
 				if _flags.ppds { env.BindService & {service: pds.spicedb.svc} },
-				env.Mount & {path: "/app/data", source: pds.data},
-				env.Mount & {path: "/app/blobs", source: pds.blobs},
+				env.Mount & {path: "/app/data", source: pds.data, owner: "node"},
+				env.Mount & {path: "/app/blobs", source: pds.blobs, owner: "node"},
 				env.SecretFile & {file: pds.secret},
 				env.EnvFile & {file: pds.config},
 			]
