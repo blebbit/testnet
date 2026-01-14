@@ -1,4 +1,4 @@
-package testnet
+package compose
 
 version: "3"
 
